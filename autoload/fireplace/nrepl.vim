@@ -192,7 +192,8 @@ function! s:extract_last_stacktrace(nrepl, session) abort
       return map(stacktrace, 'v:val.class.".".v:val.method."(".v:val.file.":".v:val.line.")"')
     endif
   endif
-  let format_st = '(symbol (str "\n\b" (apply str (interleave (repeat "\n") (map str (.getStackTrace *e)))) "\n\b\n"))'
+  let try_for_stacktrace = '(map #(str % "\n") (try (.getStackTrace *e) (catch :default je (try (aget *e "stack") (catch :default jse [])) [])))'
+  let format_st = '(symbol (str "\n\b" (apply str '.try_for_stacktrace.') "\n\b\n"))'
   let response = a:nrepl.process({'op': 'eval', 'code': '['.format_st.' *3 *2 *1]', 'ns': 'user', 'session': a:session})
   try
     let stacktrace = split(get(split(response.value[0], "\n\b\n"), 1, ""), "\n")
